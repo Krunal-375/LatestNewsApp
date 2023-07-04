@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -26,14 +27,17 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> titlesList;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         titlesList = new ArrayList<>();
+        progressBar = findViewById(R.id.progressBar);
     }
     public void onNewsClick(View view){
+        progressBar.setVisibility(View.VISIBLE);
         DownnloadNewsTask downnloadNewsTask = new DownnloadNewsTask();
         String yourapiKey = getString(R.string.API_KEY);
         downnloadNewsTask.execute("https://newsdata.io/api/1/news?apikey="+yourapiKey+"&q=cryptocurrency");
@@ -89,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.i("result title",jsonPart.getString("title"));
                     Log.i("result image",jsonPart.getString("image_url"));
                 }
+                progressBar.setVisibility(View.INVISIBLE);
                 callListActivity();
             } catch (JSONException e) {
                 e.printStackTrace();

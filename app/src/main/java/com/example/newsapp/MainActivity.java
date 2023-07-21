@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +28,8 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> titlesList;
+    ArrayList<String> linksList;
+    DBHelper mDBHelper;
     ProgressBar progressBar;
 
     @Override
@@ -34,13 +37,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         titlesList = new ArrayList<>();
+        linksList = new ArrayList<>();
         progressBar = findViewById(R.id.progressBar);
+        mDBHelper = new DBHelper(this);
     }
     public void onNewsClick(View view){
         progressBar.setVisibility(View.VISIBLE);
         DownnloadNewsTask downnloadNewsTask = new DownnloadNewsTask();
         String yourapiKey = getString(R.string.API_KEY);
         downnloadNewsTask.execute("https://newsdata.io/api/1/news?apikey="+yourapiKey+"&q=cryptocurrency");
+        //updateListsWithData();
+        callListActivity();
     }
     public class DownnloadNewsTask extends AsyncTask<String,Void,String> {
 
@@ -89,22 +96,45 @@ public class MainActivity extends AppCompatActivity {
                 JSONArray resultArray = new JSONArray(results);
                 for (int i = 0; i < resultArray.length(); i++) {
                     JSONObject jsonPart = resultArray.getJSONObject(i);
-                    titlesList.add(jsonPart.getString("title"));
+                    //titlesList.add(jsonPart.getString("title"));
+                    //Insert title and link in Database
+                    String title = jsonPart.getString("title");
+                    String link = jsonPart.getString("link");
+                    long id = mDBHelper.insertData(title,link);
+                    if(id<=0){
+                        Log.i("db","Insertion Unsuccessful");
+                    }
+                    else {
+                        Log.i("db","Insertion Successful");
+                    }
                     Log.i("result title",jsonPart.getString("title"));
                     Log.i("result image",jsonPart.getString("image_url"));
                 }
                 progressBar.setVisibility(View.INVISIBLE);
+                updateListsWithData();
                 callListActivity();
             } catch (JSONException e) {
                 e.printStackTrace();
                 //throw new RuntimeException(e);
             }
         }
+
+        private void updateListsWithData() {
+            Cursor cursor = mDBHelper.getCursorForData();
+            while (cursor.moveToNext()){
+                int id = cursor.getInt(cursor.getColumnIndex(mDBHelper.ID));
+                String title = cursor.getString(cursor.getColumnIndex(mDBHelper.TITLE));
+                titlesList.add(title);
+                String link = cursor.getString(cursor.getColumnIndex(mDBHelper.LINK));
+                linksList.add(link);
+            }
+        }
     }
 
     private void callListActivity() {
         Intent intent = new Intent(MainActivity.this,NewsListActivity.class);
-        intent.putExtra("data",titlesList);
+        intent.putExtra("title",titlesList);
+        intent.putExtra("link",linksList);
         startActivity(intent);
     }
 }

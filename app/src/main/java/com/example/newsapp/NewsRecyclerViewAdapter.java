@@ -15,9 +15,11 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
 
     private List<String> mData;
     private LayoutInflater mLayoutInflator;
-    NewsRecyclerViewAdapter(Context context, List<String> data){
+    private ItemClickListener mItemClickListener;
+    NewsRecyclerViewAdapter(Context context, List<String> data,ItemClickListener mItemClickListener){
         this.mData = data;
         this.mLayoutInflator = LayoutInflater.from(context);
+        this.mItemClickListener = mItemClickListener;
     }
 
     @NonNull
@@ -38,11 +40,22 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<NewsRecyclerVi
         return mData.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         TextView titleTextView;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             titleTextView = itemView.findViewById(R.id.tvTitle);
+            titleTextView.setOnClickListener(this);
         }
+
+        @Override
+        public void onClick(View v) {
+            if (mItemClickListener!=null){
+                mItemClickListener.onItemClick(v,getAdapterPosition());
+            }
+        }
+    }
+    public interface ItemClickListener{
+        void onItemClick(View view,int position);
     }
 }
